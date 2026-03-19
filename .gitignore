@@ -13,8 +13,9 @@ yarn-error.log
 .vscode/
 
 # Project specific
+# build
 mikan-firefox.zip
 mikan-chrome.zip
 errors.txt
-mikan_workspace.zip
+mikan.zip
 META-INF/

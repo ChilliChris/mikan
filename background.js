@@ -1,7 +1,7 @@
 // Service worker - handles extension lifecycle
 browser.runtime.onInstalled.addListener(() => {
   console.log('Mikan JP Tracker installed');
-  
+
   // Initialize storage
   browser.storage.local.get(['watchData'], (result) => {
     if (!result.watchData) {
@@ -19,13 +19,13 @@ function updateIcon(tabId, state) {
   } else if (state === 'error') {
     suffix = '-error';
   }
-  
+
   browser.action.setIcon({
     tabId: tabId,
     path: {
-      "16": `icon16${suffix}.png`,
-      "48": `icon48${suffix}.png`,
-      "128": `icon128${suffix}.png`
+      "16": `icons/icon16${suffix}.png`,
+      "48": `icons/icon48${suffix}.png`,
+      "128": `icons/icon128${suffix}.png`
     }
   });
 }

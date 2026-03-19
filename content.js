@@ -2,17 +2,18 @@
   let video = null;
   let lastTime = 0;
   let totalWatchedSeconds = 0;
+
   let isTargetLanguage = false;
+  let targetLanguageToggle = false;
+
   let currentVideoId = null;
   let lastSaveTime = 0;
   let hasError = false;
-  let detectionDone = false;
   let connectorReady = false;
   let videoElementReady = false; //TODO: is it really necessary, maybe remove this flag (that was added by ai)
   let connectorHost = null;
 
   let alwaysCheckConnectorLoaded = false; // Are the always Check Connector loaded
-  let awaysCheckConnectorActive = false;
 
 
   const TARGET_LANGUAGE = 'ja';
@@ -121,8 +122,11 @@
 
   async function getCurrentTargetLanguage() {
     let currentTargetLanguage = await sendConnectorMessage('getTargetLanguage');
-    console.log("Current Target Language : ", currentTargetLanguage);
     isTargetLanguage = (TARGET_LANGUAGE == currentTargetLanguage) || (currentTargetLanguage == "Custom");
+    if (targetLanguageToggle) {
+      isTargetLanguage = !isTargetLanguage;
+    }
+    console.log("Is target language", isTargetLanguage);
   }
 
   async function shouldTrack() {
@@ -222,8 +226,8 @@
     totalWatchedSeconds = 0;
     lastTime = 0;
     lastSaveTime = 0;
-    detectionDone = false;
     isTargetLanguage = false;
+    targetLanguageToggle = false;
   }
 
   function attachVideoListeners(videoElement) {
@@ -310,16 +314,16 @@
         window.addEventListener(event, () => {
           console.log(`Mikan Content: Navigation event (${event}) detected.`);
           // Reset flags to allow re-initialization on navigation
-          detectionDone = false;
           videoElementReady = false;
+          targetLanguageToggle = false;
           setTimeout(checkAndInit, 100);
         });
       }
 
       window.addEventListener('popstate', () => {
         console.log('Mikan Content: Popstate detected.');
-        detectionDone = false;
         videoElementReady = false;
+        targetLanguageToggle = false;
         setTimeout(checkAndInit, 100);
       });
 
@@ -328,8 +332,8 @@
         if (location.href !== lastUrl) {
           lastUrl = location.href;
           console.log('Mikan Content: URL change detected via polling.');
-          detectionDone = false;
           videoElementReady = false;
+          targetLanguageToggle = false;
           setTimeout(checkAndInit, 100);
         }
       }, 500);
@@ -358,8 +362,8 @@
       });
 
     } else if (message.type === 'toggleForce') {
-      console.log(`Mikan Content: toggleForce message received. Current isTargetLanguage: ${isTargetLanguage}`);
-      isTargetLanguage = !isTargetLanguage;
+      targetLanguageToggle = !targetLanguageToggle;
+      getCurrentTargetLanguage();
       hasError = false; // If manually toggled, clear any auto-detection error
       updateIconState();
       startTrackingIfPlaying();
