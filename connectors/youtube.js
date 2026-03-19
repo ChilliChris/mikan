@@ -42,8 +42,6 @@ class YoutubeConnector extends Connector {
   }
 
   getTargetLanguage() {
-    console.log(`Mikan Content: === Detection Start for ${this.videoId} === `);
-
     let hasJapaneseCaptions = false;
 
     for (let i = 0; i < this.languages.length; i++) {
@@ -84,14 +82,7 @@ class YoutubeConnector extends Connector {
       reason = `Heuristics: ${(japaneseRatio * 100).toFixed(0)}% Japanese chars, hasKana = ${hasKana}, channelHasKana = ${channelHasKana} `;
     }
 
-    console.log(`Mikan Content: --- Detection Summary-- - `);
-    console.log(`Mikan Content: Title: "${this.title}"`);
-    console.log(`Mikan Content: Channel: "${this.channelName}"`);
-    console.log(`Mikan Content: Captions: ${this.languages.length > 0 ? `[${this.languages.join(', ')}]` : 'none found'} `);
-    console.log(`Mikan Content: Japanese chars: ${totalJapanese}/${titleLength} (${(japaneseRatio * 100).toFixed(0)}%) - Kana: ${hiraganaKatakana}, Kanji: ${kanji}`);
-    console.log(`Mikan Content: Result: ${isJapanese ? 'JAPANESE' : 'NOT JAPANESE'}`);
-    console.log(`Mikan Content: Reason: ${reason}`);
-    console.log(`Mikan Content: === Detection End ===`);
+    console.log(`Mikan Content: Detected video language: ${isJapanese ? 'JAPANESE' : 'NOT JAPANESE'}`);
 
     if (isJapanese) {
       return "ja";
@@ -108,14 +99,12 @@ class YoutubeConnector extends Connector {
       if (activeReel) {
         videoEl = activeReel.querySelector('video');
         if (videoEl) {
-          console.log('Mikan Connector: findActiveVideo - Found video in active reel.');
           return videoEl;
         }
       }
       const videos = document.querySelectorAll('video');
       for (const v of videos) {
         if (!v.paused && v.src) {
-          console.log('Mikan Connector: findActiveVideo - Found playing video as fallback for shorts.');
           return v;
         }
       }
@@ -123,11 +112,6 @@ class YoutubeConnector extends Connector {
       videoEl = document.querySelector('video');
     }
 
-    if (videoEl) {
-      console.log('Mikan Connector: findActiveVideo - Found video element:', videoEl);
-    } else {
-      console.log('Mikan Connector: findActiveVideo - No video element found.');
-    }
     return videoEl;
   }
 

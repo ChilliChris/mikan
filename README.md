@@ -15,6 +15,5 @@ This extension need to read the page to detect video element and/or the extensio
 
 ## Work in Progress
 This is a work in progress, don't expect everything to work.
-In the last commit I broke some features...
 It also has a lot of log at the moment
 

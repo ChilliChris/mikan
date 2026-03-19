@@ -31,7 +31,6 @@
 
   const moduleUrl = browser.runtime.getURL(connectorPath);
   let module = await import(moduleUrl);
-  console.log("Mikan module", module);
   connector = module.default();
 
   function getLocalDateString() {
@@ -78,7 +77,6 @@
     if (targetLanguageToggle) {
       isTargetLanguage = !isTargetLanguage;
     }
-    console.log("Is target language", isTargetLanguage);
   }
 
   function shouldTrack() {
@@ -88,13 +86,12 @@
     if (!isTargetLanguage) {
       shouldTrack = false;
     }
-    console.log(`Mikan Content: shouldTrack: ${shouldTrack} (isTargetLanguage: ${isTargetLanguage})`);
 
     return shouldTrack;
   }
 
   async function handleTimeUpdate() {
-    //TODO: re-enable the detection if ad that are playing
+    //TODO: re-enable the detection of ad that are playing
     //if (!video || video.paused || await sendConnectorMessage('isAdPlaying')) return;
     if (!video || video.paused) return;
 
@@ -124,7 +121,6 @@
     if (video && !video.paused && shouldTrack()) {
       lastTime = video.currentTime;
       lastSaveTime = Date.now();
-      console.log('Mikan Content: Video already playing, starting to track');
     }
     updateIconState();
   }
@@ -138,35 +134,26 @@
   }
 
   function handlePlay() {
-    console.log('Mikan Content: Video play event.');
     if (!video) return;
     lastTime = video.currentTime;
     lastSaveTime = Date.now();
 
 
     startTrackingIfPlaying();
-
-    console.log('Mikan Content: Video playing, tracking:', shouldTrack());
   }
 
   function handlePause() {
-    console.log('Mikan Content: Video pause event.');
     saveProgress();
-    console.log('Mikan Content: Video paused, progress saved');
   }
 
   function handleSeeked() {
-    console.log('Mikan Content: Video seeked event.');
     lastTime = video.currentTime;
   }
 
   async function resetForNewVideo(newVideoId) {
-    console.log(`Mikan Content: resetForNewVideo called for ${newVideoId}. Old currentVideoId: ${currentVideoId}`);
     if (currentVideoId && totalWatchedSeconds > 0) {
       saveProgress();
     }
-
-    console.log(`Mikan Content: New video detected: ${newVideoId}`);
 
     currentVideoId = newVideoId;
     totalWatchedSeconds = 0;
@@ -177,7 +164,6 @@
   }
 
   function attachVideoListeners(videoElement) {
-    console.log('Mikan Content: attachVideoListeners called.');
     if (!videoElement) {
       console.log('Mikan Content: attachVideoListeners: No video element provided.');
       return;
@@ -188,7 +174,6 @@
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
       video.removeEventListener('seeked', handleSeeked);
-      console.log('Mikan Content: Removed listeners from old video element');
     }
 
     video = videoElement;
@@ -197,8 +182,6 @@
     video.addEventListener('play', handlePlay);
     video.addEventListener('pause', handlePause);
     video.addEventListener('seeked', handleSeeked);
-
-    console.log('Mikan Content: Attached listeners to video, paused:', video.paused, 'currentTime:', video.currentTime);
   }
 
   async function initializeTracker(isWatchPageNbTry = 0) {
@@ -225,7 +208,6 @@
     getCurrentTargetLanguage();// is also called later because maybe here it's too early
 
     const newVideoId = connector.getVideoId();
-    console.log('Mikan Content: newVideoId from connector:', newVideoId);
 
     if (newVideoId !== currentVideoId) {
       resetForNewVideo(newVideoId);
@@ -256,7 +238,6 @@
     await initializeTracker();
 
     const navigationEvents = connector.getNavigationEvents();
-    console.log('Mikan Content: Attaching navigation event listeners:', navigationEvents);
     for (const event of navigationEvents) {
       window.addEventListener(event, () => {
         console.log(`Mikan Content: Navigation event (${event}) detected.`);
@@ -267,7 +248,6 @@
     }
 
     window.addEventListener('popstate', () => {
-      console.log('Mikan Content: Popstate detected.');
       targetLanguageToggle = false;
       setTimeout(checkAndInit, 100);
     });
@@ -276,7 +256,6 @@
     setInterval(() => {
       if (location.href !== lastUrl) {
         lastUrl = location.href;
-        console.log('Mikan Content: URL change detected via polling.');
         targetLanguageToggle = false;
         setTimeout(checkAndInit, 100);
       }
@@ -293,7 +272,6 @@
   window.addEventListener('beforeunload', saveProgress);
 
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('Mikan Content: Message received from background/popup:', message);
     if (message.type === 'getStatus') {
       sendResponse({
         isTargetLanguage,
