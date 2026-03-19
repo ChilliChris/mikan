@@ -114,7 +114,6 @@ function updateStatus() {
         return;
       }
 
-      console.log('Mikan popup received:', response);
       if (!response) {
         statusCard.className = 'card status-card inactive';
         statusText.textContent = 'Extension not loaded';
@@ -137,7 +136,20 @@ function updateStatus() {
         statusCard.className = 'card status-card wrong-lang';
         statusText.textContent = '⚠️ Auto detection failed';
         statusSubtext.textContent = 'Network too slow - use button to override';
-      } else if (response.isTargetLanguage) {
+      } else if (!response.isWatchPage) {
+        statusCard.className = 'card status-card inactive';
+        statusText.textContent = 'Not on a supported page';
+        statusSubtext.textContent = '';
+        forceBtn.style.display = 'none';
+      }
+      // I don't think this should happen a lot
+      else if (!response.isActive) {
+        statusCard.className = 'card status-card inactive';
+        statusText.textContent = 'Not Active';
+        statusSubtext.textContent = '';
+        forceBtn.style.display = 'none';
+      }
+      else if (response.isTargetLanguage) {
         statusCard.className = 'card status-card active';
         statusText.textContent = '🎌 Tracking Japanese content';
         statusSubtext.textContent = '';

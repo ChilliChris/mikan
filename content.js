@@ -3,6 +3,10 @@
   let lastTime = 0;
   let totalWatchedSeconds = 0;
 
+  let isWatchPage = false;// here so that updateIcon can access it
+  let isActive = false;
+  let shouldTrack = false;
+
   let isTargetLanguage = false;
   let targetLanguageToggle = false;
 
@@ -70,28 +74,30 @@
   }
 
   function getCurrentTargetLanguage() {
-    let currentTargetLanguage = connector.getTargetLanguage();
-    isTargetLanguage = (TARGET_LANGUAGE == currentTargetLanguage) || (currentTargetLanguage == "Custom");
+    let currentTargetLanguage = isTargetLanguage;
+    let connectorTargetLanguage = connector.getTargetLanguage();
+    isTargetLanguage = (TARGET_LANGUAGE == connectorTargetLanguage) || (connectorTargetLanguage == "Custom");
     if (targetLanguageToggle) {
       isTargetLanguage = !isTargetLanguage;
     }
+    if (currentTargetLanguage != isTargetLanguage) {
+      updateIconState();
+    }
   }
 
-  function shouldTrack() {
-    let shouldTrack = true;
+  function refreshShouldTrack() {
+    shouldTrack = true;
 
     getCurrentTargetLanguage();
     if (!isTargetLanguage) {
       shouldTrack = false;
     }
-
-    return shouldTrack;
   }
 
   async function handleTimeUpdate() {
     //TODO: re-enable the detection of ad that are playing
     //if (!video || video.paused || await sendConnectorMessage('isAdPlaying')) return;
-    if (!video || video.paused) return;
+    if (!video || video.paused || !shouldTrack) return;
 
     const currentTime = video.currentTime;
     const delta = currentTime - lastTime;
@@ -103,7 +109,7 @@
       // Only process/save every 1 second to keep performance high
       if (now - lastSaveTime >= 1000) {
 
-        if (isTargetLanguage) {
+        if (shouldTrack) {
           saveProgress();
         }
         else {
@@ -116,7 +122,8 @@
   }
 
   function startTrackingIfPlaying() {
-    if (video && !video.paused && shouldTrack()) {
+    refreshShouldTrack();
+    if (video && !video.paused && shouldTrack) {
       lastTime = video.currentTime;
       lastSaveTime = Date.now();
     }
@@ -124,19 +131,26 @@
   }
 
   function updateIconState() {
+    let state = "";
+    if (isTargetLanguage && isWatchPage) {
+      state = "active";
+    } else if (!isTargetLanguage && isWatchPage) {
+      state = "default";
+    } else if (!isWatchPage) {
+      state = "inactive";
+    } else {
+      state = "inactive"
+    }
+
     console.log(`Mikan Content: updateIconState: isTargetLanguage: ${isTargetLanguage}`);
     browser.runtime.sendMessage({
       type: 'updateIcon',
-      state: isTargetLanguage ? 'active' : 'inactive'
+      state: state
     }).catch(e => console.error('Mikan Content: Error sending updateIcon message:', e));
   }
 
   function handlePlay() {
     if (!video) return;
-    lastTime = video.currentTime;
-    lastSaveTime = Date.now();
-
-
     startTrackingIfPlaying();
   }
 
@@ -157,7 +171,6 @@
     lastTime = 0;
     lastSaveTime = 0;
     isTargetLanguage = false;
-    targetLanguageToggle = false;
   }
 
   function attachVideoListeners(videoElement) {
@@ -181,29 +194,73 @@
     video.addEventListener('seeked', handleSeeked);
   }
 
-  async function initializeTracker(isWatchPageNbTry = 0) {
+  function refreshIsActive() {
+    isActive = connector.isActive();
+  }
+  function refreshIsWatchPage() {
+    isWatchPage = connector.isWatchPage();
+  }
+
+  let watchStateIntervalId = undefined;
+  let lastIsWatchPage = isWatchPage;
+  let lastShouldTrack = shouldTrack;
+  let lastIsActive = isActive;
+  function watchStateAndRefresh() {
+    if (watchStateIntervalId) {
+      clearInterval(watchStateIntervalId);
+    }
+    lastIsWatchPage = isWatchPage;
+    lastShouldTrack = shouldTrack;
+    lastIsActive = isActive;
+
+    watchStateIntervalId = setInterval(
+      () => {
+        function refresh() {
+          console.log("MIKAN: refresh");
+          clearInterval(watchStateIntervalId);
+
+          resetForNewVideo();
+          updateIconState();
+          checkAndInit();
+        }
+
+        refreshShouldTrack();
+        refreshIsActive();
+        refreshIsWatchPage();
+
+        if (lastShouldTrack != shouldTrack || lastIsActive != isActive || isWatchPage != lastIsWatchPage) {
+          refresh();
+        }
+      },
+      3000
+    );
+  }
+
+  async function initializeTracker() {
     // is watch page means that it can activate on this page
-    const isWatchPage = connector.isWatchPage();
+    refreshIsWatchPage();
+    // is active means that it is active right now
+    refreshIsActive();
+    refreshShouldTrack();
+
+    updateIconState();
+
+    watchStateAndRefresh(); // if it becomes disable or become enable, it will refresh
+
     if (!isWatchPage) {
       console.log('Mikan Content: initializeTracker: Not a watch page, skipping');
-      if (isWatchPageNbTry < 3) {
-        setTimeout(() => initializeTracker(isWatchPageNbTry += 1), 1000); // The page might not be loaded interely
-      } else if (isWatchPageNbTry < 6) {
-        setTimeout(() => initializeTracker(isWatchPageNbTry += 1), 5000);
-
-      }
       return;
     }
 
-    // is active means that it is active right now
     if (!connector.isActive()) {
       console.log('Mikan, possibly an immersion page, but not yet active');
-      setTimeout(initializeTracker, 1000); // retry in one second
       return;
     }
 
-    getCurrentTargetLanguage();// is also called later because maybe here it's too early
-
+    if (!shouldTrack) {
+      console.log("Mikan: should not track");
+      return;
+    }
 
     resetForNewVideo();
 
@@ -212,7 +269,6 @@
     if (videoElement) {
       attachVideoListeners(videoElement);
       lastTime = video.currentTime;
-
 
       updateIconState();
       startTrackingIfPlaying();
@@ -240,7 +296,6 @@
         setTimeout(checkAndInit, 100);
       });
     }
-
   }
 
   window.addEventListener('popstate', () => {
@@ -269,6 +324,8 @@
   browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'getStatus') {
       sendResponse({
+        isWatchPage,
+        isActive,
         isTargetLanguage,
         hasError,
       });
@@ -278,7 +335,7 @@
       getCurrentTargetLanguage();
       hasError = false; // If manually toggled, clear any auto-detection error
       updateIconState();
-      startTrackingIfPlaying();
+      initializeTracker();
       console.log(`Mikan Content: isTargetLanguage after toggle: ${isTargetLanguage}`);
       sendResponse({ success: true, isTargetLanguage });
     }

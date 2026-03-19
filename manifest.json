@@ -19,8 +19,6 @@
     "activeTab"
   ],
   "host_permissions": [
-    "*://*.youtube.com/*",
-    "*://cijapanese.com/*",
     "<all_urls>" 
   ],
   "action": {
