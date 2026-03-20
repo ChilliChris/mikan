@@ -263,37 +263,61 @@ function buildWeeklyChart() {
     });
   }
 
-  const values = days.map(d => {
-    for (const dataCategory of Object.values(watchData)) {
-      for (const dayData of dataCategory) {
-        if (dayData.date == d.date) {
-          return dayData.total || 0;
-        }
+  const dailyTotals = {};
+  for (const day of days) {
+    dailyTotals[day.date] = {
+      Reading: 0,
+      Watching: 0,
+      Speaking: 0,
+      total: 0
+    };
+  }
+
+  for (const [category, categoryData] of Object.entries(watchData)) {
+    for (const dayData of categoryData) {
+      if (dailyTotals[dayData.date]) {
+        dailyTotals[dayData.date][category] = dayData.total || 0;
+        dailyTotals[dayData.date].total += dayData.total || 0;
       }
     }
-  });
+  }
+
+  const values = days.map(d => dailyTotals[d.date].total);
   const maxValue = Math.max(...values, 60);
 
   for (let i = 0; i < days.length; i++) {
+    const day = days[i];
+    const dayData = dailyTotals[day.date];
+
     const group = document.createElement('div');
     group.className = 'bar-group';
 
     const value = document.createElement('div');
     value.className = 'bar-value';
-    value.textContent = values[i] > 0 ? formatTimeHours(values[i]) : '';
+    value.textContent = dayData.total > 0 ? formatTimeHours(dayData.total) : '';
 
     const bar = document.createElement('div');
     bar.className = 'bar';
-    const height = (values[i] / maxValue) * 120;
+    const height = (dayData.total / maxValue) * 120;
     bar.style.height = `${Math.max(height, 4)}px`;
 
-    if (values[i] === 0) {
-      bar.style.background = darkModeEnabled ? '#44403c' : '#fed7aa';
+    if (dayData.total > 0) {
+      for (const category of Object.keys(dayData).filter(k => k !== 'total')) {
+        const categorySeconds = dayData[category];
+        if (categorySeconds > 0) {
+          const segment = document.createElement('div');
+          segment.className = `bar-segment ${category}`;
+          segment.style.height = `${(categorySeconds / dayData.total) * 100}%`;
+          bar.appendChild(segment);
+        }
+      }
+    } else {
+      bar.classList.add('empty');
     }
 
     const label = document.createElement('div');
     label.className = 'bar-label';
-    label.textContent = days[i].isToday ? 'Today' : days[i].label;
+    label.textContent = day.isToday ? 'Today' : day.label;
 
     group.appendChild(value);
     group.appendChild(bar);
@@ -313,22 +337,26 @@ function buildMonthlyChart() {
     const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
     monthlyTotals[key] = {
-      seconds: 0,
+      Reading: 0,
+      Watching: 0,
+      Speaking: 0,
+      total: 0,
       label: date.toLocaleDateString('en-US', { month: 'short' })
     };
   }
 
-  for (const categoryData of Object.values(watchData)) {
+  for (const [category, categoryData] of Object.entries(watchData)) {
     for (const dayData of categoryData) {
       const monthKey = dayData.date.substring(0, 7);
       if (monthlyTotals[monthKey]) {
-        monthlyTotals[monthKey].seconds += dayData.total || 0;
+        monthlyTotals[monthKey][category] += dayData.total || 0;
+        monthlyTotals[monthKey].total += dayData.total || 0;
       }
     }
   }
 
   const months = Object.entries(monthlyTotals);
-  const maxValue = Math.max(...months.map(m => m[1].seconds), 60);
+  const maxValue = Math.max(...months.map(m => m[1].total), 60);
 
   for (const [key, data] of months) {
     const row = document.createElement('div');
@@ -337,46 +365,42 @@ function buildMonthlyChart() {
     const label = document.createElement('div');
     label.className = 'monthly-label';
     label.textContent = data.label;
+    row.appendChild(label);
 
     const barContainer = document.createElement('div');
     barContainer.className = 'monthly-bar-container';
-
-    const bar = document.createElement('div');
-    bar.className = 'monthly-bar';
-    const width = (data.seconds / maxValue) * 100;
-    bar.style.width = `${Math.max(width, 0)}%`;
-
-    if (data.seconds > 0 && width > 15) {
-      const valueSpan = document.createElement('span');
-      valueSpan.className = 'monthly-value';
-      valueSpan.textContent = formatTimeHours(data.seconds);
-      bar.appendChild(valueSpan);
-    }
-
-    barContainer.appendChild(bar);
-
-    row.appendChild(label);
     row.appendChild(barContainer);
 
-    if (data.seconds > 0 && width <= 15) {
-      const valueOutside = document.createElement('span');
-      valueOutside.className = 'monthly-value outside';
-      valueOutside.textContent = formatTimeHours(data.seconds);
-      valueOutside.style.marginLeft = '8px';
-      valueOutside.style.color = '#ea580c';
-      valueOutside.style.fontSize = '11px';
-      valueOutside.style.fontWeight = '600';
-      row.appendChild(valueOutside);
+    const monthlyBar = document.createElement('div');
+    monthlyBar.className = 'monthly-bar';
+    barContainer.appendChild(monthlyBar);
+
+    const width = (data.total / maxValue) * 100;
+    monthlyBar.style.width = `${width}%`;
+
+    if (data.total === 0) {
+      monthlyBar.classList.add('empty');
+    } else {
+      for (const category of Object.keys(data).filter(k => k !== 'total' && k !== 'label')) {
+        const categorySeconds = data[category];
+        if (categorySeconds > 0) {
+          const segment = document.createElement('div');
+          segment.className = `bar-segment ${category}`;
+          segment.style.width = `${(categorySeconds / data.total) * 100}%`;
+          monthlyBar.appendChild(segment);
+        }
+      }
     }
 
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'monthly-value';
+    valueSpan.textContent = formatTimeHours(data.total);
+    monthlyBar.appendChild(valueSpan);
+    
     container.appendChild(row);
   }
 }
 
-/**
- * Updates the Website Breakdown section with a visual bar chart
- * @param {Array} websiteStats - Array of {host: string, totalSeconds: number}
- */
 function buildWebsiteList() {
   const container = document.getElementById('website-list');
   if (!container) return;
@@ -388,29 +412,47 @@ function buildWebsiteList() {
     return;
   }
 
-  // 1. Find the maximum time to calculate relative bar widths (the "Max" becomes 100%)
   const maxSeconds = Math.max(...websiteStats.map(w => w.totalSeconds));
 
   websiteStats.forEach(website => {
-    // 2. Create the row container
     const websiteItem = document.createElement('div');
     websiteItem.className = 'website-item';
 
-    // 3. Calculate width percentage (minimum 1% so the bar is always slightly visible)
+    const websiteLabel = document.createElement('div');
+    websiteLabel.className = 'website-label';
+    websiteLabel.title = website.host;
+    websiteLabel.textContent = website.host;
+    websiteItem.appendChild(websiteLabel);
+
+    const websiteBarContainer = document.createElement('div');
+    websiteBarContainer.className = 'website-bar-container';
+
+    const websiteBar = document.createElement('div');
+    websiteBar.className = 'website-bar';
     const percentage = maxSeconds > 0 ? (website.totalSeconds / maxSeconds) * 100 : 0;
+    websiteBar.style.width = `${Math.max(percentage, 2)}%`;
 
-    // 4. Construct the internal HTML to match your Monthly Overview structure
-    websiteItem.innerHTML = `
-      <div class="website-label" title="${website.host}">
-        ${website.host}
-      </div>
-      <div class="website-bar-container">
-        <div class="website-bar" style="width: ${Math.max(percentage, 2)}%">
-          <span class="website-value">${formatTimeVerbose(website.totalSeconds)}</span>
-        </div>
-      </div>
-    `;
+    if (website.totalSeconds === 0) {
+      websiteBar.classList.add('empty');
+    } else {
+      for (const category of Object.keys(website).filter(k => k !== 'host' && k !== 'totalSeconds')) {
+        const categorySeconds = website[category];
+        if (categorySeconds > 0) {
+          const segment = document.createElement('div');
+          segment.className = `bar-segment ${category}`;
+          segment.style.width = `${(categorySeconds / website.totalSeconds) * 100}%`;
+          websiteBar.appendChild(segment);
+        }
+      }
+    }
 
+    const valueSpan = document.createElement('span');
+    valueSpan.className = 'website-value';
+    valueSpan.textContent = formatTimeVerbose(website.totalSeconds);
+    websiteBar.appendChild(valueSpan);
+
+    websiteBarContainer.appendChild(websiteBar);
+    websiteItem.appendChild(websiteBarContainer);
     container.appendChild(websiteItem);
   });
 }
@@ -531,21 +573,27 @@ function init() {
 function calculateWebsiteStats() {
   const aggregatedWebsiteData = {};
 
-  for (const dataCategory of Object.values(watchData)) {
-    for (const dayData of dataCategory) {
+  for (const [category, categoryData] of Object.entries(watchData)) {
+    for (const dayData of categoryData) {
       if (dayData && dayData.websites) {
         for (const host in dayData.websites) {
           if (!aggregatedWebsiteData[host]) {
-            aggregatedWebsiteData[host] = 0;
+            aggregatedWebsiteData[host] = {
+              host,
+              totalSeconds: 0,
+              Reading: 0,
+              Watching: 0,
+              Speaking: 0,
+            };
           }
-          aggregatedWebsiteData[host] += dayData.websites[host];
+          aggregatedWebsiteData[host][category] += dayData.websites[host];
+          aggregatedWebsiteData[host].totalSeconds += dayData.websites[host];
         }
       }
     }
   }
 
-  websiteStats = Object.entries(aggregatedWebsiteData)
-    .map(([host, totalSeconds]) => ({ host, totalSeconds }))
+  websiteStats = Object.values(aggregatedWebsiteData)
     .sort((a, b) => b.totalSeconds - a.totalSeconds);
 }
 
