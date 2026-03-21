@@ -2,6 +2,7 @@
 
 1. import Connector from "./connector.js";
 2. extend Connetor
+If it's a video, You can import video-connector.js
 3. follow cijapanese.js, it's a good example
 4. create a function that return new ExampleConnector();
 5. export default that function

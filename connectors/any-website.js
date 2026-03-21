@@ -62,7 +62,7 @@ class AnyWebsiteConnector extends VideoConnector {
   }
 
   getNavigationEvents() {
-    return []; // TODO: maybe I should get rid of this event, idk what it do
+    return [];
   }
 
   isAdPlaying() {

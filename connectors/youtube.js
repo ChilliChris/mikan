@@ -97,7 +97,6 @@ class YoutubeConnector extends VideoConnector {
   }
 
   getNavigationEvents() {
-    return [];
     console.log('Mikan Connector: getNavigationEvents - returning yt-navigate-finish');
     return ['yt-navigate-finish'];
   }

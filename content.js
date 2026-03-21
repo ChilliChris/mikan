@@ -145,10 +145,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       () => {
         function refresh() {
           console.log("MIKAN: refresh");
-          clearInterval(watchStateIntervalId);
-
-          updateIconState();
-          checkAndInit();
+          initializeTracker();
         }
 
         // if we are already tracking, the tracking function is already refreshing
@@ -159,21 +156,20 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
         if (lastShouldTrack != shouldTrack || lastIsActive != isActive || isWatchPage != lastIsWatchPage) {
           refresh();
         }
+        lastIsWatchPage = isWatchPage;
+        lastShouldTrack = shouldTrack;
+        lastIsActive = isActive;
       },
       3000
     );
   }
 
   async function initializeTracker() {
-    // is watch page means that it can activate on this page
-    refreshIsWatchPage();
-    // is active means that it is active right now
-    refreshIsActive();
-    refreshShouldTrack();
-
-    updateIconState();
-
-    watchStateAndRefresh(); // if it becomes disable or become enable, it will refresh
+    // reset
+    connector.resetTime();
+    if (trackingIntervalId) {
+      clearInterval(trackingIntervalId);
+    }
 
     if (!isWatchPage) {
       console.log('Mikan Content: initializeTracker: Not a watch page, skipping');
@@ -190,6 +186,15 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       return;
     }
 
+    const navigationEvents = connector.getNavigationEvents();
+    for (const event of navigationEvents) {
+      window.addEventListener(event, () => {
+        console.log(`Mikan Content: Navigation event (${event}) detected.`);
+        // Reset flags to allow re-initialization on navigation
+        targetLanguageToggle = false;
+        setTimeout(initializeTracker(), 100);
+      });
+    }
 
     updateIconState();
     startTracking();
@@ -197,22 +202,12 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
     console.log('Mikan Content: Tracker initialized successfully.');
   }
 
-  async function checkAndInit() {
+  function checkAndInit() {
     if (!connector) {
       console.log('Mikan Content: Waiting for connector. Status: Connector Ready:', connectorReady);
     }
 
-    await initializeTracker();
-
-    const navigationEvents = connector.getNavigationEvents();
-    for (const event of navigationEvents) {
-      window.addEventListener(event, () => {
-        console.log(`Mikan Content: Navigation event (${event}) detected.`);
-        // Reset flags to allow re-initialization on navigation
-        targetLanguageToggle = false;
-        setTimeout(checkAndInit, 100);
-      });
-    }
+    watchStateAndRefresh(); // if it becomes disable or become enable, it will refresh
   }
 
   window.addEventListener('popstate', () => {

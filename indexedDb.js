@@ -30,7 +30,7 @@ openOrCreateDB.addEventListener('upgradeneeded', init => {
 });
 
 export function addTime(category, date, website, time) {
-  // fix of a bug, idk why it happens, TODO: maybe find the root of the bug?
+  // fix of a bug, idk why it happens
   if (typeof time != "number") {
     return
   }

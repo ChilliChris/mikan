@@ -5,30 +5,45 @@ export default class VideoConnector extends Connector {
     super()
 
     this.video = null;
-    this.lastTime = 0;
+    this.lastTime = -1;
     this.totalWatchedSeconds = 0;
-    this.lastTotalWatchSeconds = 0;
+    this.lastTotalWatchSeconds = -1;
   }
 
   getTimeSinceLastCall() {
+    if (this.lastTotalWatchSeconds == -1) {
+      this.lastTotalWatchSeconds = this.totalWatchedSeconds;
+    }
     let result = this.totalWatchedSeconds - this.lastTotalWatchSeconds;
+
+    // safe guard for bugs: sometimes even though I reset time when seeked, it sometimes doesn't work on youtube
+    if (result > 1 || result < 0) {
+      console.warn("MIKAN: time change is too large");
+      this.resetTime();
+      return 0;
+    }
+
     this.lastTotalWatchSeconds = this.totalWatchedSeconds;
     return result;
   }
 
   resetTime() {
     this.totalWatchedSeconds = 0;
-    this.lastTotalWatchSeconds = 0;
+    this.lastTotalWatchSeconds = -1;
+    this.lastTime = -1;
   }
 
   handleSeeked = () => {
-    this.lastTime = this.video.currentTime;
+    console.log("MIKAN: video seeked, resut current time")
+    this.resetTime();
   }
 
   handleTimeUpdate = async () => {
-    //TODO: re-enable the detection of ad that are playing
-    //if (!video || video.paused || await sendConnectorMessage('isAdPlaying')) return;
-    if (!this.video || this.video.paused) return;
+    if (!this.video || this.video.paused || this.isAdPlaying()) return;
+
+    if (this.lastTime == -1) {
+      this.lastTime = this.video.currentTime;
+    }
 
     const currentTime = this.video.currentTime;
     let delta = currentTime - this.lastTime;
@@ -50,9 +65,7 @@ export default class VideoConnector extends Connector {
       this.video.removeEventListener('timeupdate', this.handleTimeUpdate);
       this.video.removeEventListener('seeked', this.handleSeeked);
       this.video = null;
-      this.lastTime = 0;
-      this.totalWatchedSeconds = 0;
-      this.lastTotalWatchSeconds = 0;
+      this.resetTime();
     }
 
     this.video = videoElement;
@@ -65,5 +78,9 @@ export default class VideoConnector extends Connector {
 
   getCategory() {
     return "Watching"
+  }
+
+  isAdPlaying() {
+    return false;
   }
 }
