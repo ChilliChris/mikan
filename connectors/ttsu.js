@@ -5,6 +5,10 @@ class CijConnector extends Connector {
   constructor() {
     super();
     this.lastTime = undefined;
+    this.lastPercentageValue = "";
+    this.nbTimeAFK = 0;
+
+    this.aftThreshold = 120; // 0.5 * 120 = 1 minute
   }
 
   getName() {
@@ -31,9 +35,27 @@ class CijConnector extends Connector {
     return false;// can't detect
   }
 
+  getPercentageValue() {
+    return document.getElementsByClassName("mr-4")[0].textContent;
+  }
+
   getTimeSinceLastCall() {
     if (!this.lastTime) {
       this.lastTime = new Date();
+      return 0;
+    }
+
+    let percentageValue = this.getPercentageValue();
+    if (this.lastPercentageValue == percentageValue) {
+      this.nbTimeAFK += 1;
+    } else {
+      this.lastPercentageValue = percentageValue;
+      this.nbTimeAFK = 0;
+    }
+
+    if (this.nbTimeAFK > this.aftThreshold) {
+      this.lastTime = new Date();
+      return 0;
     }
 
     let currentTime = new Date();

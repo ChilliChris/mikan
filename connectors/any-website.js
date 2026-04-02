@@ -49,6 +49,9 @@ class AnyWebsiteConnector extends VideoConnector {
   }
 
   isWatchPage() {
+    if (this.isAsbplayerLoaded()) {
+      return true;
+    }
     let video = this.getVideoElement();
     if (video != undefined) {
       this.attachVideoListeners(video);
