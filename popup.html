@@ -160,6 +160,28 @@
       gap: 12px;
     }
 
+    .date-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-secondary);
+      flex-direction: column;
+    }
+
+    .date-selector input {
+      width: 150px;
+      height: 40px;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      border: 2px solid var(--border-secondary);
+      border-radius: 8px;
+      color: var(--brand-primary);
+      background: var(--current-bg-card);
+    }
+
     .duration-selector {
       display: flex;
       align-items: center;
@@ -269,6 +291,10 @@
   </div>
 
   <form class="manual-timing" id="manual-timing">
+    <div class="date-selector">
+      <label for="date">Date (can be left blank):</label>
+      <input type="date" id="date" name="day">
+    </div>
     <div class="duration-selector">
       <input type="number" id="hours" name="hours" min="0" max="23" value="0">
       <p>h :</p>
