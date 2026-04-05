@@ -17,7 +17,7 @@ class YoutubeConnector extends VideoConnector {
   }
 
   getName() {
-    return "Youtube";
+    return "YouTube";
   }
 
   getTargetLanguage() {

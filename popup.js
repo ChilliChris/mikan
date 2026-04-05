@@ -183,6 +183,10 @@ setInterval(() => {
   updateStatus();
 }, 1000);
 
+function isValidDate(inDate){
+  var date = new Date(inDate);
+}
+
 document.getElementById("manual-timing").addEventListener("submit", async (e) => {
   e.preventDefault();
   const category = document.getElementById("category").value.trim();
@@ -192,8 +196,13 @@ document.getElementById("manual-timing").addEventListener("submit", async (e) =>
   const time = minutes * 60 + hours * 60 * 60;
 
 
-  const today = new Date().toISOString().split("T")[0];
-
+  const date = new Date(document.getElementById("date").value);
+  let today = "";
+  if (!isNaN(date.getTime())) {
+    today = date.toISOString().split("T")[0];
+  } else {
+    today = new Date().toISOString().split("T")[0];
+  }
 
   await browserAPI.runtime.sendMessage({
     type: 'addTime',
