@@ -71,6 +71,43 @@ export function addTime(category, date, website, time) {
   }
 };
 
+export function removeTime(category, date, website, time) {
+  if (typeof time != "number") {
+    return
+  }
+  const transaction = db.transaction([category], 'readwrite');
+  const objectStore = transaction.objectStore(category);
+
+  const getRequest = objectStore.get(date);
+
+
+  getRequest.onsuccess = (event) => {
+    let existing = event.target.result;
+
+    if (!existing) {
+      return;
+    }
+
+    if (!existing.websites[website]) {
+      return;
+    }
+
+    existing.total -= time;
+    existing.websites[website] -= time;
+
+
+    const putRequest = objectStore.put(existing);
+
+    putRequest.onsuccess = () => {
+      //console.log("Note updated successfully!");
+    };
+
+    putRequest.onerror = (event) => {
+      console.error("Error updating note:", event.target.error);
+    };
+  }
+};
+
 export async function getDayTotal(date) {
   let totalTime = 0;
   totalTime += await getDayCategoryTotal("Reading", date);

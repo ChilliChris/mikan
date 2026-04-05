@@ -45,7 +45,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       date: today,
       website: activeHost,
       time: time
-    }).catch(e => console.error('Mikan Content: Error sending updateIcon message:', e));
+    }).catch(e => console.error('Mikan Content: Error adding time:', e));
   }
 
   function getCurrentTargetLanguage() {

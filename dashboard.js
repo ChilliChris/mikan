@@ -222,13 +222,20 @@ function buildHeatmap() {
     if (!timestamp || !value) {
       return;
     }
+    let date = new Date(timestamp);
+
     let section = document.getElementById("selected-day-section");
     section.style.display = "block";
 
+    let element = section.getElementsByClassName("selected-day-title")[0];
+    if (element) {
+      element.innerText = date.toLocaleDateString();
+    }
+
     let container = document.getElementById("selected-day-list");
 
-    let date = new Date(timestamp).toISOString().split("T")[0];
-    buildWebsiteList(container, date)
+    date = date.toISOString().split("T")[0];
+    buildWebsiteList(container, true, date)
   });
 }
 
@@ -416,7 +423,7 @@ function buildMonthlyChart() {
   }
 }
 
-function buildWebsiteList(container = undefined, date = "") {
+function buildWebsiteList(container = undefined, canDelete = false, date = "") {
   calculateWebsiteStats(date);
 
   if (!container || container == undefined) {
@@ -473,6 +480,35 @@ function buildWebsiteList(container = undefined, date = "") {
 
     websiteBarContainer.appendChild(websiteBar);
     websiteItem.appendChild(websiteBarContainer);
+
+    if (canDelete && date == "") {
+      console.error("Mikan: Build website list, Does not support deleting data without specifying date");
+    } else if (canDelete) {
+      const deleteContainer = document.createElement('div');
+      deleteContainer.className = 'delete-container';
+      deleteContainer.innerHTML = `<span class="delete-x">&times;</span>`;
+
+
+      deleteContainer.addEventListener("click", async () => {
+        for (const category of Object.keys(website).filter(k => k !== 'host' && k !== 'totalSeconds')) {
+          // await because I don't want to relead before modifying the data
+          await browserAPI.runtime.sendMessage({
+            type: 'removeTime',
+            category: category,
+            date: date,
+            website: website.host,
+            time: website[category]
+          }).catch(e => console.error('Mikan Content: Error deleting Data :', e));
+        }
+
+        //reload
+        await getDataAndRender();
+        buildWebsiteList(container, canDelete, date)
+      })
+
+      websiteItem.appendChild(deleteContainer);
+    }
+
     container.appendChild(websiteItem);
   });
 }
@@ -577,12 +613,7 @@ function init() {
       //render();
     });
 
-    browserAPI.runtime.sendMessage({ type: 'getAllData' })
-      .then((data) => {
-        console.log(data);
-        watchData = data;
-        render();
-      });
+    getDataAndRender();
 
     // Listen for changes
     browserAPI.storage.onChanged.addListener((changes) => {
@@ -599,6 +630,13 @@ function init() {
     watchData = {};
     render();
   }
+}
+
+async function getDataAndRender() {
+  let data = await browserAPI.runtime.sendMessage({ type: 'getAllData' })
+  console.log(data);
+  watchData = data;
+  render();
 }
 
 function calculateWebsiteStats(date = "") {

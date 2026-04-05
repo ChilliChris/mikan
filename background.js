@@ -1,4 +1,4 @@
-import { addTime, getAllData, getDayTotal } from "./indexedDb.js";
+import { addTime, getAllData, getDayTotal, removeTime } from "./indexedDb.js";
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
@@ -45,6 +45,8 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
   } else if (message.type === "addTime") {
     addTime(message.category, message.date, message.website, message.time);
+  } else if (message.type === "removeTime") {
+    removeTime(message.category, message.date, message.website, message.time);
   } else if (message.type === "getDayTotal") {
     getDayTotal(message.date)
       .then((total) => sendResponse(total));
