@@ -9,10 +9,19 @@ class AnyWebsiteConnector extends VideoConnector {
   isAsbplayerLoaded() {
     // class names present when using asbplayer
     const ASB_INDICATORS = [
-      "asbplayer-offscreen",
+      "asbplayer-mobile-video-overlay-container-top",
+      "asbplayer-subtitles-container-top",
+      "asbplayer-subtitles-container-bottom"
       //"asbplayer-token-container"
-    ]
-    return ASB_INDICATORS.some(cls => document.getElementsByClassName(cls).length > 0)
+    ];
+    // clases of div, only if they have children
+    const ASB_INDICATORS_CHILDREN = [
+      "asbplayer-offscreen"
+    ];
+    return (
+      ASB_INDICATORS.some(cls => document.getElementsByClassName(cls).length > 0) ||
+      ASB_INDICATORS_CHILDREN.some(cls => Array.from(document.getElementsByClassName(cls)).some(el => el.hasChildNodes()))
+    );
   }
 
 
