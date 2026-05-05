@@ -11,6 +11,7 @@ This extension need to read the page to detect video element or other things ind
 - [comprehensible japanese](cijapanese.com)
 - [っつ reader](https://reader.ttsu.app/manage)
 - [Mokuro reader](https://reader.mokuro.app/)
+- [Bilingual Manga](https://bilingualmanga.org)
 - [NHK news](https://news.web.nhk/newsweb) and [NHK easy](https://news.web.nhk/news/easy/)
 - [朝日新聞 (asashi news)](asahi.com) and the [easy version](yasashii.asahi.com)
 - [asbplayer](https://github.com/killergerbah/asbplayer): on every website, if asbplayer is loaded, this extension will track time based on the video element.

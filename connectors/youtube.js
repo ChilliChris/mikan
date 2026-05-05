@@ -2,7 +2,6 @@ import VideoConnector from "./template/video-connector.js";
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
-// connectors/youtube.js
 class YoutubeConnector extends VideoConnector {
   constructor() {
     super();

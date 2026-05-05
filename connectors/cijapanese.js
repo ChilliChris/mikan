@@ -1,6 +1,5 @@
 import VideoConnector from "./template/video-connector.js";
 
-// connectors/cijapanese.js
 class CijConnector extends VideoConnector {
   constructor() {
     super();

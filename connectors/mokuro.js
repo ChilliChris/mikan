@@ -1,6 +1,5 @@
 import TimerAfkConnector from "./template/timer-afk-connector.js";
 
-// connectors/cijapanese.js
 class MokuroConnector extends TimerAfkConnector {
   constructor() {
     super();

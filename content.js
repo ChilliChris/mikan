@@ -46,6 +46,11 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       connectorPath: "connectors/mokuro.js",
       all_frames: false
     },
+    {
+      url: ["bilingualmanga.org"],
+      connectorPath: "connectors/bilingualManga.js",
+      all_frames: false
+    },
   ];
 
   let host;
