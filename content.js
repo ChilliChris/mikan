@@ -17,7 +17,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
   const siteConnectors = [
     {
-      url: ["youtube.com"],
+      url: ["youtube.com", "m.youtube.com"],
       connectorPath: "connectors/youtube.js",
       all_frames: false
     },
@@ -40,7 +40,12 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       url: ["yasashii.asahi.com", "asahi.com"],
       connectorPath: "connectors/asahi.js",
       all_frames: false
-    }
+    },
+    {
+      url: ["reader.mokuro.app"],
+      connectorPath: "connectors/mokuro.js",
+      all_frames: false
+    },
   ];
 
   let host;
