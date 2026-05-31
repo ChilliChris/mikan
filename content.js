@@ -18,7 +18,8 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
   const siteConnectors = {
     'youtube.com': 'connectors/youtube.js',
     'cijapanese.com': 'connectors/cijapanese.js',
-    'reader.ttsu.app': 'connectors/ttsu.js'
+    'reader.ttsu.app': 'connectors/ttsu.js',
+    'twitch.tv': 'connectors/twitch.js'
   };
 
   const host = window.location.hostname.replace('www.', '');

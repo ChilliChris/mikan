@@ -39,6 +39,7 @@
       "matches": [
         "*://*.youtube.com/*",
         "*://cijapanese.com/*",
+        "*://*.twitch.tv/*",
         "<all_urls>" 
       ],
       "js": [
@@ -55,7 +56,8 @@
         "connectors/youtube.js",
         "connectors/cijapanese.js",
         "connectors/any-website.js",
-        "connectors/ttsu.js" 
+        "connectors/ttsu.js",
+        "connectors/twitch.js"
       ],
       "matches": [
         "<all_urls>"
