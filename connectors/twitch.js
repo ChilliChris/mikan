@@ -42,8 +42,6 @@ class TwitchConnector extends VideoConnector {
     //const japaneseRegex = /[\u3040-\u309F\u30A0-\u30FF]/;
     const hiraganaKatakana = (this.title.match(/[\u3040-\u309F\u30A0-\u30FF]/g) || []).length;
     const kanji = (this.title.match(/[\u4E00-\u9FAF]/g) || []).length;
-    const totalJapanese = hiraganaKatakana + kanji;
-    const titleLength = this.title.length;
 
     const hasKana = hiraganaKatakana > 0;
     const hasKanji = kanji > 0;

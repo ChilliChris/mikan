@@ -19,7 +19,8 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
     'youtube.com': 'connectors/youtube.js',
     'cijapanese.com': 'connectors/cijapanese.js',
     'reader.ttsu.app': 'connectors/ttsu.js',
-    'twitch.tv': 'connectors/twitch.js'
+    'twitch.tv': 'connectors/twitch.js',
+    'netflix.com': 'connectors/netflix.js'
   };
 
   const host = window.location.hostname.replace('www.', '');
@@ -86,11 +87,13 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
   function startTracking() {
     connector.resetTime();
     if (trackingIntervalId) {
+      console.log("TRACKINGINT", trackingIntervalId)
       clearInterval(trackingIntervalId);
     }
     trackingIntervalId = setInterval(
       () => {
         refreshShouldTrack();
+
         if (!connector || !shouldTrack) {
           console.log("MIKAN: stop tracking time");
           connector.resetTime();
