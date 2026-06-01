@@ -74,13 +74,9 @@ function getMonthStart() {
 
 function calculateStats() {
 
-  const now = new Date();
-  let dayOfWeek = now.getDay();
-  // monday = 1
-  if (dayOfWeek == 0) {
-    dayOfWeek = 7;
-  }
-  const today = new Date().toISOString().split("T")[0];
+  const today =
+    new Date().toLocaleDateString('en-CA');
+
   const weekStart = getWeekStart();
   const monthStart = getMonthStart();
 
@@ -89,62 +85,86 @@ function calculateStats() {
   let monthSeconds = 0;
   let totalSeconds = 0;
 
-  // const daysWithData = days.filter(d => watchData[d] && watchData[d].totalSeconds > 0);
-  const daysWithData = [];
+  const activeDays = new Set();
+  const activeMonths = new Set();
 
-  for (const categoryData of Object.values(watchData)) {
-    for (const day of categoryData) {
-      const seconds = day.total || 0;
-      if (seconds > 0) {
-        if (!daysWithData.includes(day.date)) {
-          daysWithData.push(day.date);
-        }
-      }
-      totalSeconds += seconds;
+  for (const row of watchData) {
 
-      if (day.date === today) {
-        todaySeconds += seconds;
-      }
-      if (day.date >= weekStart) {
-        weekSeconds += seconds;
-      }
-      if (day.date >= monthStart) {
-        monthSeconds += seconds;
-      }
+    const seconds = row.seconds;
+
+    totalSeconds += seconds;
+
+    activeDays.add(row.immersion_date);
+
+    activeMonths.add(
+      row.immersion_date.substring(0, 7)
+    );
+
+    if (row.immersion_date === today) {
+      todaySeconds += seconds;
+    }
+
+    if (row.immersion_date >= weekStart) {
+      weekSeconds += seconds;
+    }
+
+    if (row.immersion_date >= monthStart) {
+      monthSeconds += seconds;
     }
   }
 
-  const dailyAvg = daysWithData.length > 0 ? totalSeconds / daysWithData.length : 0;
+  const dailyAvg =
+    activeDays.size > 0
+      ? totalSeconds / activeDays.size
+      : 0;
 
-  const monthsSet = new Set();
-  for (const day of daysWithData) {
-    monthsSet.add(day.substring(0, 7));
-  }
-  const monthlyAvg = monthsSet.size > 0 ? totalSeconds / monthsSet.size : 0;
+  const monthlyAvg =
+    activeMonths.size > 0
+      ? totalSeconds / activeMonths.size
+      : 0;
 
-  document.getElementById('today-stat').textContent = formatTime(todaySeconds);
-  document.getElementById('week-stat').textContent = formatTime(weekSeconds);
-  document.getElementById('month-stat').textContent = formatTime(monthSeconds);
-  document.getElementById('total-stat').textContent = formatTime(totalSeconds);
-  document.getElementById('daily-avg-stat').textContent = formatTime(dailyAvg);
-  document.getElementById('monthly-avg-stat').textContent = formatTime(monthlyAvg);
+  document.getElementById('today-stat').textContent =
+    formatTime(todaySeconds);
+
+  document.getElementById('week-stat').textContent =
+    formatTime(weekSeconds);
+
+  document.getElementById('month-stat').textContent =
+    formatTime(monthSeconds);
+
+  document.getElementById('total-stat').textContent =
+    formatTime(totalSeconds);
+
+  document.getElementById('daily-avg-stat').textContent =
+    formatTime(dailyAvg);
+
+  document.getElementById('monthly-avg-stat').textContent =
+    formatTime(monthlyAvg);
 }
 
 let calHeatmap = null;
 
 function buildHeatmap() {
+  const dailyTotals = {};
+
+  for (const row of watchData) {
+
+    if (!dailyTotals[row.immersion_date]) {
+      dailyTotals[row.immersion_date] = 0;
+    }
+
+    dailyTotals[row.immersion_date] += row.seconds;
+  }
+
   // Convert watchData to Cal-Heatmap format
   const heatmapData = [];
 
-  for (const categoryData of Object.values(watchData)) {
-    for (const dayData of categoryData) {
-      if (dayData.total > 0) {
-        heatmapData.push({
-          date: dayData.date,
-          value: dayData.total
-        });
-      }
-    }
+  for (const [date, total] of Object.entries(dailyTotals)) {
+
+    heatmapData.push({
+      date: date,
+      value: total
+    });
   }
 
   // Find max for scaling
@@ -295,12 +315,10 @@ function buildWeeklyChart() {
     };
   }
 
-  for (const [category, categoryData] of Object.entries(watchData)) {
-    for (const dayData of categoryData) {
-      if (dailyTotals[dayData.date]) {
-        dailyTotals[dayData.date][category] = dayData.total || 0;
-        dailyTotals[dayData.date].total += dayData.total || 0;
-      }
+  for (const row of watchData) {
+    if (dailyTotals[row.immersion_date]) {
+      dailyTotals[row.immersion_date][row.category] += row.seconds;
+      dailyTotals[row.immersion_date].total += row.seconds;
     }
   }
 
@@ -367,13 +385,11 @@ function buildMonthlyChart() {
     };
   }
 
-  for (const [category, categoryData] of Object.entries(watchData)) {
-    for (const dayData of categoryData) {
-      const monthKey = dayData.date.substring(0, 7);
-      if (monthlyTotals[monthKey]) {
-        monthlyTotals[monthKey][category] += dayData.total || 0;
-        monthlyTotals[monthKey].total += dayData.total || 0;
-      }
+  for (const row of watchData) {
+    const monthKey = row.immersion_date.substring(0, 7);
+    if (monthlyTotals[monthKey]) {
+      monthlyTotals[monthKey][row.category] += row.seconds;
+      monthlyTotals[monthKey].total += row.seconds;
     }
   }
 
@@ -424,6 +440,8 @@ function buildMonthlyChart() {
 }
 
 function buildWebsiteList(container = undefined, canDelete = false, date = "") {
+  console.log("Building website list with date filter:", date);
+  
   calculateWebsiteStats(date);
 
   if (!container || container == undefined) {
@@ -596,6 +614,8 @@ function renderWebsitePieChart() {
 }
 
 function init() {
+  console.log("Initializing dashboard...");
+
   // Set up dark mode toggle
   document.getElementById('dark-mode-btn').addEventListener('click', () => {
     darkModeEnabled = !darkModeEnabled;
@@ -613,6 +633,7 @@ function init() {
       //render();
     });
 
+    console.log("Requesting data from background...");
     getDataAndRender();
 
     // Listen for changes
@@ -634,39 +655,45 @@ function init() {
 
 async function getDataAndRender() {
   let data = await browserAPI.runtime.sendMessage({ type: 'getAllData' })
-  console.log(data);
+  console.log("GOT DATA", data);
   watchData = data;
   render();
 }
 
 function calculateWebsiteStats(date = "") {
+  console.log("Calculating website stats with date filter:", date);
+
   const aggregatedWebsiteData = {};
 
-  for (const [category, categoryData] of Object.entries(watchData)) {
-    for (const dayData of categoryData) {
-      if (dayData && dayData.websites) {
-        if (date != "" && dayData.date != date) {
-          continue;
-        }
-        for (const host in dayData.websites) {
-          if (!aggregatedWebsiteData[host]) {
-            aggregatedWebsiteData[host] = {
-              host,
-              totalSeconds: 0,
-              Reading: 0,
-              Watching: 0,
-              Speaking: 0,
-            };
-          }
-          aggregatedWebsiteData[host][category] += dayData.websites[host];
-          aggregatedWebsiteData[host].totalSeconds += dayData.websites[host];
-        }
-      }
+  for (const row of watchData) {
+    if (date != "" && row.immersion_date !== date) {
+      //console.log(`Skipping row with date ${row.immersion_date} because it does not match filter date ${date}`);
+      continue;
     }
+
+    const host = row.website;
+
+    console.log(`Processing row for date ${row.immersion_date}, category ${row.category}, with ${row.seconds} seconds on websites:`, row.website);
+
+    if (!aggregatedWebsiteData[host]) {
+      aggregatedWebsiteData[host] = {
+        host: host,
+        totalSeconds: 0,
+        Reading: 0,
+        Watching: 0,
+        Speaking: 0,
+      };
+    }
+
+    aggregatedWebsiteData[host][row.category] += row.seconds;
+
+    aggregatedWebsiteData[host].totalSeconds += row.seconds; 
   }
 
   websiteStats = Object.values(aggregatedWebsiteData)
     .sort((a, b) => b.totalSeconds - a.totalSeconds);
+
+  console.log("Calculated website stats:", websiteStats);
 }
 
 function render() {

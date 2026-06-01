@@ -1,5 +1,3 @@
-import { supabase } from "./supabase.js";
-
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 let db;
