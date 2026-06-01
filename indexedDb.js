@@ -5,10 +5,52 @@ const openOrCreateDB = indexedDB.open('MikanDB', 1)
 
 openOrCreateDB.addEventListener('error', () => console.error('Error opening DB'));
 
-openOrCreateDB.addEventListener('success', () => {
+openOrCreateDB.addEventListener('success', async() => {
   db = openOrCreateDB.result;
   console.log('Successfully opened DB', db);
+
+  await cleanupEmptyEntries();
 });
+
+async function cleanupEmptyEntries() {
+  const categories = ['Watching', 'Reading', 'Speaking'];
+
+  for (const category of categories) {
+    await cleanupStore(category);
+  }
+}
+
+function cleanupStore(category) {
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(category, 'readwrite');
+    const store = transaction.objectStore(category);
+
+    const request = store.openCursor();
+
+    request.onsuccess = (event) => {
+      const cursor = event.target.result;
+
+      if (!cursor) {
+        resolve();
+        return;
+      }
+
+      const value = cursor.value;
+
+      // Delete empty entries
+      if (!value.total || value.total <= 0) {
+        cursor.delete();
+      }
+
+      cursor.continue();
+    };
+
+    request.onerror = (event) => {
+      console.error("Cleanup failed:", event.target.error);
+      reject(event.target.error);
+    };
+  });
+}
 
 openOrCreateDB.addEventListener('upgradeneeded', init => {
   db = init.target.result;
@@ -88,13 +130,16 @@ export function removeTime(category, date, website, time) {
       return;
     }
 
-    if (!existing.websites[website]) {
-      return;
-    }
-
     existing.total -= time;
     existing.websites[website] -= time;
 
+    console.log("WEBSITES", existing.websites)
+    delete existing.websites[website];
+    console.log("WEBSITES AFTER", existing.websites)
+
+    if (existing.websites[website] <= 0) {
+      
+    }
 
     const putRequest = objectStore.put(existing);
 
