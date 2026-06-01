@@ -5,6 +5,12 @@ import * as indexedDBOld from "./indexedDb.js";
 
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
+let authReadyResolve;
+
+const authReady = new Promise((resolve) => {
+  authReadyResolve = resolve;
+});
+
 async function signIn() {
 
   return new Promise(async (resolve, reject) => {
@@ -63,6 +69,7 @@ async function signIn() {
             return;
           }
 
+          authReadyResolve();
           resolve(sessionData);
         } catch (e) {
           console.error("Error during authentication:", e);
@@ -116,21 +123,29 @@ async function migrateIndexedDBToSupabase() {
   console.log("MIGRATION COMPLETE");
 }
 
-// Service worker - handles extension lifecycle
-browserAPI.runtime.onInstalled.addListener(async () => {
-  console.log('Mikan JP Tracker installed');
+async function initializeAuth() {
+
+  const {
+    data: { session }
+  } = await supabase.auth.getSession();
+
+  // Existing session
+  if (session) {
+
+    console.log("Existing session restored");
+
+    authReadyResolve();
+
+    return;
+  }
+
+  // Need login
+  console.log("No session, signing in");
 
   await signIn();
+}
 
-  //await migrateIndexedDBToSupabase();
-
-  // Initialize storage
-  browserAPI.storage.local.get(['watchData'], (result) => {
-    if (!result.watchData) {
-      browserAPI.storage.local.set({ watchData: {} });
-    }
-  });
-});
+initializeAuth();
 
 function updateIcon(tabId, state) {
   let suffix = '';
@@ -152,7 +167,7 @@ function updateIcon(tabId, state) {
   });
 }
 
-browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browserAPI.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'updateIcon') {
     if (sender.tab) {
       // Message from content script
@@ -165,13 +180,15 @@ browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
     addTime(message.category, message.date, message.website, message.time);
     // } else if (message.type === "removeTime") {
     //   removeTime(message.category, message.date, message.website, message.time);
-  } else if (message.type === "getDayTotal") {
-    getDayTotal(message.date)
-      .then((total) => sendResponse(total));
-    return true;
   } else if (message.type === "getAllData") {
-    getAllData()
-      .then((data) => sendResponse(data));
-    return true;
+
+    await authReady;
+
+    return getAllData();
+  } else if (message.type === "getDayTotal") {
+
+    await authReady;
+
+    return getDayTotal(message.date);
   }
 });

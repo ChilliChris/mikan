@@ -5,9 +5,9 @@
     --brand-tertiary: #c2410c;
 
     /* Activity Type Colors */
-    --activity-reading: #3498db;
-    --activity-watching: #e74c3c;
-    --activity-speaking: #2ecc71;
+    --activity-reading: #80b0eb;
+    --activity-watching: #eb995f;
+    --activity-speaking: #55dfb1;
 
     /* --- Light Theme --- */
     --bg-gradient: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);

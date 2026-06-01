@@ -47,7 +47,6 @@ async function updateStats() {
     const currentDate = new Date(now);
     currentDate.setDate(now.getDate() - i);
 
-
     let dateString = currentDate.toLocaleDateString('en-CA');
     let result = await browserAPI.runtime.sendMessage({ type: 'getDayTotal', date: dateString });
 
@@ -60,7 +59,6 @@ async function updateStats() {
     monthSeconds += result;
     //totalSeconds += result;
   }
-
   document.getElementById('today-time').textContent = formatTime(todaySeconds);
   document.getElementById('week-time').textContent = formatTime(weekSeconds);
   document.getElementById('month-time').textContent = formatTime(monthSeconds);
