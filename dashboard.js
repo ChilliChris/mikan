@@ -64,12 +64,12 @@ function getWeekStart() {
   const now = new Date();
   const dayOfWeek = now.getDay();
   const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  return new Date(now.getFullYear(), now.getMonth(), diff).toISOString().split("T")[0];
+  return new Date(now.getFullYear(), now.getMonth(), diff).toLocaleDateString('en-CA');
 }
 
 function getMonthStart() {
   const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0];
+  return new Date(now.getFullYear(), now.getMonth(), 1).toLocaleDateString('en-CA');
 }
 
 function calculateStats() {
@@ -254,7 +254,7 @@ function buildHeatmap() {
 
     let container = document.getElementById("selected-day-list");
 
-    date = date.toISOString().split("T")[0];
+    date = date.toLocaleDateString('en-CA');
     buildWebsiteList(container, true, date)
   });
 }
@@ -299,7 +299,7 @@ function buildWeeklyChart() {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
     days.push({
-      date: date.toISOString().split("T")[0],
+      date: date.toLocaleDateString('en-CA'),
       label: date.toLocaleDateString('en-US', { weekday: 'short' }),
       isToday: i === 0
     });

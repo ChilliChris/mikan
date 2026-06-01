@@ -39,7 +39,7 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
   function saveProgress(time) {
     const activeHost = connector.getName();
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toLocaleDateString('en-CA');
 
     browserAPI.runtime.sendMessage({
       type: 'addTime',

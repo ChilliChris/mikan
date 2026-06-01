@@ -47,7 +47,8 @@ async function updateStats() {
     const currentDate = new Date(now);
     currentDate.setDate(now.getDate() - i);
 
-    let dateString = currentDate.toISOString().split('T')[0];
+
+    let dateString = currentDate.toLocaleDateString('en-CA');
     let result = await browserAPI.runtime.sendMessage({ type: 'getDayTotal', date: dateString });
 
     if (i == 0) {
@@ -199,9 +200,9 @@ document.getElementById("manual-timing").addEventListener("submit", async (e) =>
   const date = new Date(document.getElementById("date").value);
   let today = "";
   if (!isNaN(date.getTime())) {
-    today = date.toISOString().split("T")[0];
+    today = date.toLocaleDateString('en-CA');
   } else {
-    today = new Date().toISOString().split("T")[0];
+    today = new Date().toLocaleDateString('en-CA');
   }
 
   await browserAPI.runtime.sendMessage({
