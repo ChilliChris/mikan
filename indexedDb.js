@@ -1,11 +1,28 @@
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 let db;
-const openOrCreateDB = indexedDB.open('MikanDB', 1)
+
+const openOrCreateDB = indexedDB.open('MikanDB', 1);
+
+const waitForDB = () => {
+  return new Promise((resolve) => {
+    if (db) {
+      resolve();
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (db) {
+        clearInterval(interval);
+        resolve();
+      }
+    }, 10);
+  });
+};
 
 openOrCreateDB.addEventListener('error', () => console.error('Error opening DB'));
 
-openOrCreateDB.addEventListener('success', async() => {
+openOrCreateDB.addEventListener('success', async () => {
   db = openOrCreateDB.result;
   console.log('Successfully opened DB', db);
 
@@ -71,7 +88,9 @@ openOrCreateDB.addEventListener('upgradeneeded', init => {
   tableSpeaking.createIndex('Total Seconds', 'total', { unique: false });
 });
 
-export function addTime(category, date, website, time) {
+export async function addTime(category, date, website, time) {
+  await waitForDB();
+  
   // fix of a bug, idk why it happens
   if (typeof time != "number") {
     return
@@ -113,7 +132,9 @@ export function addTime(category, date, website, time) {
   }
 };
 
-export function removeTime(category, date, website, time) {
+export async function removeTime(category, date, website, time) {
+  await waitForDB();
+
   if (typeof time != "number") {
     return
   }
@@ -154,6 +175,8 @@ export function removeTime(category, date, website, time) {
 };
 
 export async function getDayTotal(date) {
+  await waitForDB();
+
   let totalTime = 0;
   totalTime += await getDayCategoryTotal("Reading", date);
   totalTime += await getDayCategoryTotal("Speaking", date);
@@ -162,6 +185,8 @@ export async function getDayTotal(date) {
 }
 
 export async function getDayCategoryTotal(category, date) {
+  await waitForDB();
+
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(category);
     const objectStore = transaction.objectStore(category);
@@ -184,6 +209,8 @@ export async function getDayCategoryTotal(category, date) {
 }
 
 export async function getAllData() {
+  await waitForDB();
+  
   let result = { Reading: [], Watching: [], Speaking: [] };
 
   result["Reading"] = await getAllDataCategory("Reading");
@@ -194,6 +221,8 @@ export async function getAllData() {
 }
 
 export async function getAllDataCategory(category) {
+  await waitForDB();
+  
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(category);
     const store = transaction.objectStore(category);
