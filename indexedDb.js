@@ -1,3 +1,5 @@
+import { supabase } from "./supabase.js";
+
 const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
 let db;
@@ -89,6 +91,8 @@ openOrCreateDB.addEventListener('upgradeneeded', init => {
 });
 
 export async function addTime(category, date, website, time) {
+  
+  
   await waitForDB();
   
   // fix of a bug, idk why it happens
@@ -98,6 +102,9 @@ export async function addTime(category, date, website, time) {
   if (website == "") {
     website = "Manual"
   }
+
+  
+
   const transaction = db.transaction([category], 'readwrite');
   const objectStore = transaction.objectStore(category);
 

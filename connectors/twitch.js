@@ -1,7 +1,5 @@
 import VideoConnector from "./video-connector.js";
 
-const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
-
 // connectors/twitch.js
 class TwitchConnector extends VideoConnector {
   constructor() {

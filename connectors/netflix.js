@@ -33,7 +33,7 @@ class NetflixConnector extends VideoConnector {
   }
 
   getName() {
-    return "Twitch";
+    return "Netflix";
   }
 
   getTargetLanguage() {
