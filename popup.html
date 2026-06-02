@@ -65,6 +65,11 @@
       box-shadow: var(--current-shadow);
     }
 
+    /* Buttons */
+    .btn-dashboard:hover {
+      background: linear-gradient(135deg, var(--heatmap-level-6) 0%, var(--brand-secondary) 100%);
+    }
+
     /* Cards & Stats */
     .card,
     .stat-box,
@@ -265,59 +270,71 @@
     <button class="dark-mode-toggle" id="dark-mode-btn" title="Toggle dark mode">🌙</button>
   </div>
 
-  <button class="btn-dashboard" id="dashboard-btn">
-    📊 Open Dashboard
+  <button class="btn-dashboard" id="login-btn">
+    Sign In
   </button>
+  <div id="auth-content">
+    <button class="btn-dashboard" id="dashboard-btn">
+      📊 Open Dashboard
+    </button>
 
-  <div class="card status-card inactive" id="status-card">
-    <div class="status-text" id="status-text">Checking...</div>
-    <div class="status-subtext" id="status-subtext"></div>
-    <button class="btn-force" id="force-btn" style="display: none;">Force Japanese</button>
+    <div class="card status-card inactive" id="status-card">
+      <div class="status-text" id="status-text">Checking...</div>
+      <div class="status-subtext" id="status-subtext"></div>
+      <button class="btn-force" id="force-btn" style="display: none;">Force Japanese</button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-value" id="today-time">0:00</div>
+        <div class="stat-label">Today</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="week-time">0:00</div>
+        <div class="stat-label">This Week</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="month-time">0:00</div>
+        <div class="stat-label">This Month</div>
+      </div>
+    </div>
+
+    <div class="card status-card inactive" id="status-card">
+      <div class="status-text" id="status-text">Manual Time</div>
+      <form class="manual-timing" id="manual-timing">
+        <div class="date-selector">
+          <label for="date">Date (can be left blank):</label>
+          <input type="date" id="date" name="day">
+        </div>
+        <div class="duration-selector">
+          <input type="number" id="hours" name="hours" min="0" max="23" value="0">
+          <p>h :</p>
+          <input type="number" id="minutes" name="minutes" min="0" max="59" value="0">
+          <p>m</p>
+        </div>
+        <div class="category-selector">
+          <label for="category">Category:</label>
+          <select type="text" name="category" id="category">
+            <option value="Watching">Watching</option>
+            <option value="Reading">Reading</option>
+            <option value="Speaking">Speaking</option>
+          </select>
+        </div>
+        <div class="website-input">
+          <label for="website">Website (can be left blank):</label>
+          <input type="text" name="website" id="website">
+        </div>
+
+        <div class="submit-button">
+          <button type="sumbit">Add time</button>
+        </div>
+      </form>
+    </div>
+
+    <button class="btn-dashboard" id="logout-btn">
+      Sign Out
+    </button>
   </div>
-
-  <div class="stats-grid">
-    <div class="stat-box">
-      <div class="stat-value" id="today-time">0:00</div>
-      <div class="stat-label">Today</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-value" id="week-time">0:00</div>
-      <div class="stat-label">This Week</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-value" id="month-time">0:00</div>
-      <div class="stat-label">This Month</div>
-    </div>
-  </div>
-
-  <form class="manual-timing" id="manual-timing">
-    <div class="date-selector">
-      <label for="date">Date (can be left blank):</label>
-      <input type="date" id="date" name="day">
-    </div>
-    <div class="duration-selector">
-      <input type="number" id="hours" name="hours" min="0" max="23" value="0">
-      <p>h :</p>
-      <input type="number" id="minutes" name="minutes" min="0" max="59" value="0">
-      <p>m</p>
-    </div>
-    <div class="category-selector">
-      <label for="category">Category:</label>
-      <select type="text" name="category" id="category">
-        <option value="Watching">Watching</option>
-        <option value="Reading">Reading</option>
-        <option value="Speaking">Speaking</option>
-      </select>
-    </div>
-    <div class="website-input">
-      <label for="website">Website (can be left blank):</label>
-      <input type="text" name="website" id="website">
-    </div>
-
-    <div class="submit-button">
-      <button type="sumbit">Add time</button>
-    </div>
-  </form>
 
   <div class="footer">
     Created by <a href="https://www.youtube.com/JouzuJuls" target="_blank" rel="noopener">Jouzu Juls</a> · <a

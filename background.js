@@ -39,9 +39,10 @@ async function signIn() {
 
         console.log("CALLBACK URL", callbackUrl)
 
-        if (chrome.runtime.lastError) {
-          console.error(chrome.runtime.lastError);
-          reject(chrome.runtime.lastError);
+        const runTimeError = chrome.runtime.lastError;
+        if (runTimeError) {
+          console.error(runTimeError);
+          reject(runTimeError);
           return;
         }
 
@@ -61,6 +62,13 @@ async function signIn() {
           const { sessionData, sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token
+          });
+
+          await browserAPI.storage.local.set({
+            supabaseSession: {
+              access_token,
+              refresh_token
+            }
           });
 
           if (error) {
@@ -125,24 +133,36 @@ async function migrateIndexedDBToSupabase() {
 
 async function initializeAuth() {
 
-  const {
-    data: { session }
-  } = await supabase.auth.getSession();
+  const result = await new Promise((resolve) => {
+    browserAPI.storage.local.get(
+      "supabaseSession",
+      resolve
+    );
+  });
 
-  // Existing session
-  if (session) {
+  const savedSession = result.supabaseSession;
 
-    console.log("Existing session restored");
+  if (savedSession) {
+    console.log("Restoring saved session");
 
-    authReadyResolve();
+    const { error } =
+      await supabase.auth.setSession({
+        access_token: savedSession.access_token,
+        refresh_token: savedSession.refresh_token
+      });
 
-    return;
+    if (!error) {
+      console.log("Session restored!");
+
+      authReadyResolve();
+
+      return;
+    }
+
+    console.error("Failed to restore session", error);
   }
 
-  // Need login
-  console.log("No session, signing in");
-
-  await signIn();
+  console.log("No session found");
 }
 
 initializeAuth();
@@ -190,5 +210,17 @@ browserAPI.runtime.onMessage.addListener(async (message, sender, sendResponse) =
     await authReady;
 
     return getDayTotal(message.date);
+  } else if (message.type === "signIn") {
+
+    await signIn();
+
+    return true;
+  } else if (message.type === "isAuthenticated") {
+
+    const {
+      data: { session }
+    } = await supabase.auth.getSession();
+
+    return !!session;
   }
 });

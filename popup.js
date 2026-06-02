@@ -140,6 +140,32 @@ function updateStatus() {
   });
 }
 
+async function updateAuthUI() {
+
+  const loggedIn =
+    await browserAPI.runtime.sendMessage({
+      type: "isAuthenticated"
+    });
+
+  console.log("Logged IN", loggedIn);
+  const loginBtn = document.getElementById("login-btn");
+  const authContent = document.getElementById("auth-content");
+  
+
+  if (loggedIn) {
+
+    loginBtn.style.display = "none";
+    authContent.style.display = "block";
+
+  } else {
+
+    loginBtn.style.display = "block";
+    authContent.style.display = "none";
+  }
+
+  updateDarkModeUI();
+}
+
 document.getElementById('force-btn').addEventListener('click', () => {
   browserAPI.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
@@ -152,6 +178,28 @@ document.getElementById('force-btn').addEventListener('click', () => {
   });
 });
 
+document.getElementById('login-btn')
+  .addEventListener('click', async () => {
+
+    try {
+
+      await browserAPI.runtime.sendMessage({
+        type: 'signIn'
+      });
+
+      await updateAuthUI();
+
+      console.log("Signed in");
+
+      await updateStats();
+      updateStatus();
+
+    } catch (e) {
+
+      console.error("Login failed", e);
+    }
+  });
+
 document.getElementById('dashboard-btn').addEventListener('click', () => {
   browserAPI.tabs.create({ url: browserAPI.runtime.getURL('dashboard.html') });
 });
@@ -160,6 +208,10 @@ document.getElementById('dark-mode-btn').addEventListener('click', () => {
   darkModeEnabled = !darkModeEnabled;
   browserAPI.storage.local.set({ darkModeEnabled });
   updateDarkModeUI();
+});
+
+document.getElementById('manual-timing').addEventListener('click', () => {
+  console.log("Manual Timing pressed")
 });
 
 // Listen for dark mode changes from dashboard
@@ -175,6 +227,7 @@ browserAPI.storage.local.get(['darkModeEnabled'], (result) => {
   updateDarkModeUI();
   updateStats();
   updateStatus();
+  updateAuthUI();
 });
 
 setInterval(() => {
@@ -182,7 +235,7 @@ setInterval(() => {
   updateStatus();
 }, 1000);
 
-function isValidDate(inDate){
+function isValidDate(inDate) {
   var date = new Date(inDate);
 }
 
