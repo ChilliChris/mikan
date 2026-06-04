@@ -160,12 +160,37 @@ async function initializeAuth() {
     }
 
     console.error("Failed to restore session", error);
+
+    console.error("Failed to restore session", error);
+
+    await browserAPI.storage.local.remove(
+      "supabaseSession"
+    );
   }
 
   console.log("No session found");
 }
 
 initializeAuth();
+
+supabase.auth.onAuthStateChange(
+  async (event, session) => {
+
+    console.log("AUTH EVENT", event);
+
+    if (session) {
+
+      await browserAPI.storage.local.set({
+        supabaseSession: {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token
+        }
+      });
+
+      console.log("Saved updated session");
+    }
+  }
+);
 
 function updateIcon(tabId, state) {
   let suffix = '';
@@ -216,6 +241,11 @@ browserAPI.runtime.onMessage.addListener(async (message, sender, sendResponse) =
 
     return true;
   } else if (message.type === "isAuthenticated") {
+
+    console.log("Await Auth");
+    await authReady;
+
+    console.log("Auth Finished")
 
     const {
       data: { session }
