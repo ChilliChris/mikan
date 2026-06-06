@@ -59,7 +59,7 @@ async function signIn() {
             return;
           }
 
-          const { sessionData, sessionError } = await supabase.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token,
             refresh_token
           });
@@ -72,13 +72,13 @@ async function signIn() {
           });
 
           if (error) {
-            console.error("Error setting session:", sessionError);
-            reject(sessionError);
+            console.error("Error setting session:", error);
+            reject(error);
             return;
           }
 
           authReadyResolve();
-          resolve(sessionData);
+          resolve(data);
         } catch (e) {
           console.error("Error during authentication:", e);
           reject(e);
@@ -169,6 +169,8 @@ async function initializeAuth() {
   }
 
   console.log("No session found");
+
+  authReadyResolve();
 }
 
 initializeAuth();
@@ -244,12 +246,13 @@ browserAPI.runtime.onMessage.addListener(async (message, sender, sendResponse) =
 
     console.log("Await Auth");
     await authReady;
-
     console.log("Auth Finished")
 
     const {
       data: { session }
     } = await supabase.auth.getSession();
+
+    console.log("SESSION", session);
 
     return !!session;
   }
