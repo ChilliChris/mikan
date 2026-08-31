@@ -7,10 +7,10 @@ This is a fork of that extension that supports other website than youtube and no
 This extension need to read the page to detect video element or other things indicating it needs to track time. It requires the permission to do so. If it is not enabled by default, you need to allow it in the extension settings.
 
 ## Supported websites
-- [youtube](youtube.com)
+- [YouTube](youtube.com)
+- [Twitch](https://twitch.tv)
+- [Netflix](https://netflix.com)
 - [comprehensible japanese](cijapanese.com)
 - [asbplayer](https://github.com/killergerbah/asbplayer): on every website, if asbplayer is loaded, this extension will track time based on the video element.
 - [っつ reader](https://reader.ttsu.app/manage) with afk detection
-- [Twitch](https://twitch.tv) with afk detection
-- [Netflix](https://netflix.com) with afk detection
 - any website: if there's a video element, AND that the user say that it's in the correct language, the extension will track time.
