@@ -11,10 +11,6 @@ This extension need to read the page to detect video element or other things ind
 - [comprehensible japanese](cijapanese.com)
 - [asbplayer](https://github.com/killergerbah/asbplayer): on every website, if asbplayer is loaded, this extension will track time based on the video element.
 - [っつ reader](https://reader.ttsu.app/manage) with afk detection
+- [Twitch](https://twitch.tv) with afk detection
+- [Netflix](https://netflix.com) with afk detection
 - any website: if there's a video element, AND that the user say that it's in the correct language, the extension will track time.
-- ~~other coming soon(?)~~
-
-## Work in Progress
-This is a work in progress, don't expect everything to work.
-It also has a lot of log at the moment
-
