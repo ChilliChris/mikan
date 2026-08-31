@@ -1,12 +1,12 @@
 import TimerAfkConnector from "./template/timer-afk-connector.js";
 
-class TtsuConnector extends TimerAfkConnector {
+class MokuroConnector extends TimerAfkConnector {
   constructor() {
     super();
   }
 
   getName() {
-    return "っつ reader";
+    return "Mokuro reader";
   }
 
   getTargetLanguage() {
@@ -14,7 +14,7 @@ class TtsuConnector extends TimerAfkConnector {
   }
 
   isWatchPage() {
-    return window.location.href.includes("id=");
+    return window.location.href.includes("/reader/");
   }
 
   isActive() {
@@ -32,6 +32,6 @@ class TtsuConnector extends TimerAfkConnector {
 };
 
 export default function connectorFactory() {
-  return new TtsuConnector();
+  return new MokuroConnector();
 }
 

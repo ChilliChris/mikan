@@ -15,29 +15,84 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
   const TARGET_LANGUAGE = 'ja';
 
-  const siteConnectors = {
-    'youtube.com': 'connectors/youtube.js',
-    'cijapanese.com': 'connectors/cijapanese.js',
-    'reader.ttsu.app': 'connectors/ttsu.js',
-    'twitch.tv': 'connectors/twitch.js',
-    'netflix.com': 'connectors/netflix.js'
-  };
+  const siteConnectors = [
+    {
+      url: ["youtube.com", "m.youtube.com"],
+      connectorPath: "connectors/youtube.js",
+      all_frames: false
+    },
+    {
+      url: ["cijapanese.com"],
+      connectorPath: "connectors/cijapanese.js",
+      all_frames: false
+    },
+    {
+      url: ["reader.ttsu.app"],
+      connectorPath: "connectors/ttsu.js",
+      all_frames: false
+    },
+    {
+      url: ["news.web.nhk"],
+      connectorPath: "connectors/nhk.js",
+      all_frames: false
+    },
+    {
+      url: ["yasashii.asahi.com", "asahi.com"],
+      connectorPath: "connectors/asahi.js",
+      all_frames: false
+    },
+    {
+      url: ["reader.mokuro.app"],
+      connectorPath: "connectors/mokuro.js",
+      all_frames: false
+    },
+    {
+      url: ["bilingualmanga.org"],
+      connectorPath: "connectors/bilingualManga.js",
+      all_frames: false
+    },
+    {
+      url: ["twitch.tv"],
+      connectorPath: "connectors/twitch.js",
+      all_frames: false
+    },
+    {
+      url: ["netflix.com"],
+      connectorPath: "connectors/netflix.js",
+      all_frames: false
+    },
+  ];
 
-  const host = window.location.hostname.replace('www.', '');
-  let connectorPath = siteConnectors[host];
+  let host;
+  try {
+    host = window.top.location.hostname.replace('www.', '');
+  } catch {
+    host = (await browserAPI.runtime.sendMessage({ type: "getTopHost" })).replace('www.', '');
+  }
+  let connectorInfo = siteConnectors.find((e) => e.url.includes(host));
 
-  if (!connectorPath) {
-    connectorPath = "connectors/any-website.js"
+  if (!connectorInfo) {
+    const anyWebsiteInfo = {
+      url: host,
+      connectorPath: "connectors/any-website.js",
+      all_frames: true
+    }
+    connectorInfo = anyWebsiteInfo;
   }
 
-  console.log("Mikan: Connector path: ", connectorPath);
+  if (!connectorInfo.all_frames && window != window.top) {
+    console.log("Mikan: not top frame, stopping");
+    return;
+  }
 
-  const moduleUrl = browserAPI.runtime.getURL(connectorPath);
+  console.log("Mikan: Connector: ", connectorInfo);
+
+  const moduleUrl = browserAPI.runtime.getURL(connectorInfo.connectorPath);
   let module = await import(moduleUrl);
   connector = module.default();
 
-  function saveProgress(time) {
-    const activeHost = connector.getName();
+  async function saveProgress(time) {
+    const activeHost = await connector.getName();
 
     const today = new Date().toISOString().split("T")[0];
 
@@ -175,6 +230,8 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       clearInterval(trackingIntervalId);
     }
 
+    updateIconState();
+
     if (!isWatchPage) {
       console.log('Mikan Content: initializeTracker: Not a watch page, skipping');
       return;
@@ -184,6 +241,11 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       console.log('Mikan, possibly an immersion page, but not yet active');
       return;
     }
+
+    // It's active, prevent other content script in other frames to continue sending to popup or tracking
+    browserAPI.runtime.sendMessage({
+      type: 'broadcastMikanActive',
+    })
 
     if (!shouldTrack) {
       console.log("Mikan: should not track");
@@ -200,7 +262,6 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       });
     }
 
-    updateIconState();
     startTracking();
 
     console.log('Mikan Content: Tracker initialized successfully.');
@@ -214,13 +275,26 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
     watchStateAndRefresh(); // if it becomes disable or become enable, it will refresh
   }
 
+  function stop() {
+    if (watchStateIntervalId) {
+      clearInterval(watchStateIntervalId);
+    }
+    if (trackingIntervalId) {
+      clearInterval(trackingIntervalId);
+    }
+    if (refreshUrlIntervalId) {
+      clearInterval(refreshUrlIntervalId)
+    }
+    connector.resetTime();
+  }
+
   window.addEventListener('popstate', () => {
     targetLanguageToggle = false;
     setTimeout(checkAndInit, 100);
   });
 
   let lastUrl = location.href;
-  setInterval(() => {
+  let refreshUrlIntervalId = setInterval(() => {
     if (location.href !== lastUrl) {
       lastUrl = location.href;
       targetLanguageToggle = false;
@@ -237,7 +311,11 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
 
   window.addEventListener('beforeunload', saveProgress);
 
-  browserAPI.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  let respondToMessage = true;
+  function browserMessageListener(message, sender, sendResponse) {
+    if (!respondToMessage) {
+      return false;
+    }
     if (message.type === 'getStatus') {
       sendResponse({
         isWatchPage,
@@ -255,6 +333,15 @@ const browserAPI = typeof browser !== 'undefined' ? browser : chrome;
       console.log(`Mikan Content: isTargetLanguage after toggle: ${isTargetLanguage}`);
       sendResponse({ success: true, isTargetLanguage });
     }
-    return true; // Keep the message channel open for sendResponse
-  });
-})();
+    // If content.js is active in an other frame, stop this script
+    else if (message.type === "MikanActive") {
+      stop();
+      respondToMessage = false;
+      browserAPI.runtime.onMessage.removeListener(browserMessageListener);
+    }
+    return false;
+  };
+
+  browserAPI.runtime.onMessage.addListener(browserMessageListener);
+
+})()

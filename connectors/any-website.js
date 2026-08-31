@@ -1,5 +1,4 @@
-// connectors/any-website.js
-import VideoConnector from "./video-connector.js";
+import VideoConnector from "./template/video-connector.js";
 
 class AnyWebsiteConnector extends VideoConnector {
   constructor() {
@@ -9,15 +8,28 @@ class AnyWebsiteConnector extends VideoConnector {
   isAsbplayerLoaded() {
     // class names present when using asbplayer
     const ASB_INDICATORS = [
-      "asbplayer-offscreen",
+      "asbplayer-mobile-video-overlay-container-top",
+      "asbplayer-subtitles-container-top",
+      "asbplayer-subtitles-container-bottom"
       //"asbplayer-token-container"
-    ]
-    return ASB_INDICATORS.some(cls => document.getElementsByClassName(cls).length > 0)
+    ];
+    // clases of div, only if they have children
+    const ASB_INDICATORS_CHILDREN = [
+      "asbplayer-offscreen"
+    ];
+    return (
+      ASB_INDICATORS.some(cls => document.getElementsByClassName(cls).length > 0) ||
+      ASB_INDICATORS_CHILDREN.some(cls => Array.from(document.getElementsByClassName(cls)).some(el => el.hasChildNodes()))
+    );
   }
 
 
-  getName() {
-    return window.location.host;
+  async getName() {
+    try {
+      return window.top.location.hostname.replace('www.', '');
+    } catch {
+      return (await browserAPI.runtime.sendMessage({ type: "getTopHost" })).replace('www.', '');
+    }
   }
 
   getTargetLanguage() {
@@ -31,21 +43,8 @@ class AnyWebsiteConnector extends VideoConnector {
   }
 
   getVideoElement() {
-    let videoElements = [];
     let v = document.querySelector('video');
-    if (v != undefined && v != null) {
-      videoElements.push(v);
-    }
-    document.querySelectorAll('iframe').forEach(item => {
-      let v = item.contentWindow.document.body.querySelector('video');
-      if (v != undefined && v != null) {
-        videoElements.push(v);
-      }
-    })
-    if (videoElements.length < 1) {
-      return undefined;
-    }
-    return videoElements[0];
+    return v;
   }
 
   isWatchPage() {
