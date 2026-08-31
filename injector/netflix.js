@@ -26,18 +26,11 @@
 
             const sessionId = sessions[0];
 
-            //console.log("SESSION", sessionId)
-
             const audioTrack = sessionId.currentAudioTrack;
-
-            //console.log("AUDIOTRACK", audioTrack)
 
             const isPlaying = sessionId.playing;
 
-            //console.log("ISPLAYING", isPlaying)
-
             const state = {
-                //title: metadata?._video._video.title,
                 playing: isPlaying,
                 audio: {
                     language: audioTrack?.language,

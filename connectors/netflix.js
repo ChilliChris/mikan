@@ -21,8 +21,6 @@ class NetflixConnector extends VideoConnector {
 
         this.audioTrack = data.audio;
         this.isPlaying = data.playing;
-
-        console.log(data);
     });
 
     const script = document.createElement("script");
